@@ -23,6 +23,7 @@
 *.cb
 *.cb2
 .*.lb
+*.synctex(busy)
 
 ## Bibliography auxiliary files (bibtex/biblatex/biber):
 *.bbl
