@@ -1,0 +1,190 @@
+\documentclass[a4paper]{article}
+
+\usepackage[latin1]{inputenc}
+%\usepackage[mathcal]{euscript}
+\usepackage{color}
+%\usepackage{listings}
+%\usepackage{ngerman}
+\usepackage{amsmath,amssymb,amsfonts,bm,mathrsfs}
+\usepackage{graphics}
+\usepackage{graphicx}
+
+\usepackage{algorithm}
+%\usepackage{algorithmic}
+%\usepackage{algorithmicx}
+\usepackage[noend]{algpseudocode}
+
+%\usepackage{mathrsfs}
+\usepackage{array}
+%\usepackage{bm}
+%\usepackage{bbm}
+\usepackage{verbatim}
+\usepackage{hyperref}
+\usepackage{wrapfig}
+
+
+% Todo notes
+%\usepackage[colorlinks]{hyperref}
+\usepackage[colorinlistoftodos]{todonotes}
+
+
+\usepackage[authoryear,round]{natbib}
+
+% Special things
+\def\TReg{\textsuperscript{\textregistered}}
+\def\TCop{\textsuperscript{\textcopyright}}
+\def\TTra{\textsuperscript{\texttrademark}}
+\def\Deg{$^\circ\,$}
+
+% Text tricks
+\newcommand{\qu}[1]{``#1''}
+
+% Common functions, distributions and policies
+\newcommand{\indiroot}[0]{\vartheta}
+\newcommand{\indidist}[0]{\zeta}
+\newcommand{\indipol}[0]{\tau}
+\newcommand{\indifun}[0]{\phi}
+\newcommand{\facfun}[0]{\varphi}
+\newcommand{\basefun}[0]{\psi}
+\newcommand{\indi}[0]{\indiroot}
+\newcommand{\KLdiv}[0]{D_{\text{KL}}}
+\newcommand{\rnd}[2]{{\textstyle\frac{d#1}{d#2}}}
+
+% Sets
+\def\all{:}
+\def\R{\mathrm{I\kern-0.4ex R}}
+\def\N{\mathrm{I\kern-0.4ex N}}
+\newcommand{\Set}[1]{\mathcal{#1}}
+\newcommand{\Bx}[0]{\Set B(\Set X)}
+\newcommand{\Ba}[0]{\Set B(\Set A)}
+\newcommand{\Bxa}[0]{\Set B(\Set X \times \Set A)}
+\newcommand{\Lt}[1]{L^2(#1)}
+\newcommand{\Lx}[0]{\Lt{\Set X,\zeta}}
+\newcommand{\Lxa}[0]{\Lt{\Set X \times \Set A, \indi}}
+\newcommand{\Lz}[0]{\Lt{\Set Z,\indi}}
+
+% Math declarations
+\newcommand{\sgn}{\mathop{\mathrm{sgn}}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\ve}[1]{\bm #1} %{\bm{#1}}
+\newcommand{\grad}[0]{\nabla}
+\newcommand{\dom}[0]{\mathbf{dom}\,}
+\newcommand{\trace}[0]{\mathbf{tr}}
+\newcommand{\shallbe}[0]{\stackrel{!}{=}}
+\newcommand{\statetrans}[1]{\stackrel{#1}{\to}}
+\newcommand{\frobenius}[0]{\text{F}}
+\newcommand{\normdist}[0]{\mathcal{N}}
+
+\newcommand{\wsp}[3]{\langle #1 , #2 \rangle_{ #3 }}
+\newcommand{\isp}[2]{\wsp{#1}{#2}{\indidist\indipol}}
+\newcommand{\kernel}[0]{\kappa}
+\newcommand{\banach}[1]{\mathcal{B}(\Set #1)}
+\newcommand{\eqgap}[0]{\vspace{.1cm}}
+\newcommand{\op}[1]{\hat #1}
+\newcommand{\projectop}[2]{\op \Pi^{#2}_{#1}}
+\newcommand{\prop}[0]{\projectop{\indi}{\basefun}}
+\newcommand{\propphi}[0]{\projectop{\zeta}{\phi}}
+\newcommand{\proppsi}[0]{\projectop{\indiroot}{\psi}}
+\newcommand{\meanpol}[1]{\op \Gamma{\kern-0.5ex}_{#1}}
+\newcommand{\meanaction}[0]{\meanpol{\tau}}
+\newcommand{\meanpolicy}[0]{\meanpol{\pi}}
+%\newcommand{\meanaction}[0]{\op \Gamma{\kern-0.5ex_\tau}}
+%\newcommand{\meanpolicy}[0]{\op \Gamma{\kern-0.5ex_\pi}}
+\newcommand{\subgrad}[1]{\grad\kern-0.5ex_{#1}}
+
+
+% Operators
+%\def\E{\mathrm{I\kern-0.4ex E}}
+\def\E{\mathbb{E}}
+\def\V{\mathbb{V}}
+\def\C{\mathbb{C}}
+\def\notexists{\mathrm{| \kern-1.0ex \exists}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+%\DeclareMathOperator*{\exp}{exp}
+\DeclareMathOperator*{\setunit}{\cup}
+%\DeclareMathOperator*{\smallsum}{ {\textstyle\sum\limits} }
+
+\newcommand{\smallprod}[2]{ {\textstyle \prod\limits_{\scriptscriptstyle #1}^{\scriptscriptstyle #2}} }
+\newcommand{\smallsum}[2]{ {\textstyle \sum\limits_{\scriptscriptstyle #1}^{\scriptscriptstyle #2}} }
+\newcommand{\smallhalf}[0]{{\textstyle\frac{1}{2}}}
+\newcommand{\smallfrac}[2]{ {\textstyle \frac{#1}{#2}} }
+\newcommand{\stack}[1]{\!\!\begin{array}{c}\scriptstyle #1\end{array}\!\!}
+\newcommand{\brs}[1][-1mm]{\\[#1]\scriptstyle}
+
+% Formats
+\newcommand{\algcomment}[1]{{\scriptsize\sc // #1}}
+\newcommand{\gap}[0]{\vspace{0.25cm}}
+\newcommand{\antigap}[0]{\vspace{-0.25cm}}
+\newcommand{\closetoequation}[0]{\begin{eqnarray*}
+\frac{\partial \pi_a(\ve q)}{\partial \beta} 
+	&=& q_a \pi_a(\ve q)
+		- \pi_a(\ve q) \; \ve q^\top \ve \pi(\ve q) \\
+\frac{\partial}{\partial \beta} \sum_{t=1}^n \ve q_t^\top \ve \pi(\ve q_t)
+	&=& \sum_{t=1}^n \Big( \ve q_t \otimes \ve q_t \Big)^\top \ve \pi(\ve q_t)
+		- \sum_{t=1}^n \Big( \ve q_t^\top \ve \pi(\ve q_t) \Big)^2
+\end{eqnarray*}
+
+  \vspace{-0.6cm} 
+
+  \hspace{-0.6cm}
+}
+
+\newenvironment{proof}
+	{\noindent\textbf{Proof:}}
+	{\vspace{-.5cm} \begin{flushright} $\Box$ \end{flushright} }
+
+
+% Theorem corner
+\newtheorem{theorem}{Theorem}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{remark}[theorem]{Remark}
+
+% Array definition
+\renewcommand{\arraystretch}{2.125}
+
+
+% Paper format
+\evensidemargin 0.8cm
+\oddsidemargin  0.8cm
+\topmargin -2cm
+\setlength\textwidth{14.2cm} 
+\setlength\textheight{25cm}
+
+% Code style
+\usepackage[procnames]{listings}
+\definecolor{mykeywords}{RGB}{0,0,255}
+\definecolor{comments}{RGB}{96,96,96}
+\definecolor{red}{RGB}{160,0,0}
+\definecolor{green}{RGB}{0,150,0}
+\definecolor{light-gray}{gray}{0.95}
+\lstset{language=Python, 
+        basicstyle=\ttfamily\small, 
+        keywordstyle=\color{mykeywords},
+        commentstyle=\color{comments},
+        stringstyle=\color{red},
+        showstringspaces=false,
+        identifierstyle=\color{black},
+        procnamekeys={def,class},
+        tabsize=4,
+        backgroundcolor=\color{light-gray}
+}
+
+\def\packenumtopsep{0.75\topsep}
+\newenvironment{packenum}{%
+\vspace{-\packenumtopsep}%
+\begin{enumerate}%
+\setlength\itemsep{-1.4mm}%
+\setlength\itemindent{-3mm}%
+}{%
+\end{enumerate}%
+\vspace{-\packenumtopsep}%
+}
+\newcommand{\smallparagraph}{\vspace{2mm}\noindent}
+\newcommand\new[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}

@@ -1,0 +1,297 @@
+\include{RLFS.preambel}
+
+\title{Deep RL and Tree-search for Feature Selection}
+\author{Wendelin B\"ohmer (TU Delft), Rong Guo (TU Berlin)}
+
+% ==============================================================================
+
+\begin{document}
+\maketitle
+
+\listoftodos
+
+% ==============================================================================
+\section{Domain Background}
+
+\todo[inline, prepend, caption={Background}]{
+\begin{enumerate}
+\item
+Pseudocode of AlphaZero.
+\item
+Feature selection literature.
+\end{enumerate}
+}
+
+% ==============================================================================
+\section{Problem/Solution Statement}
+\begin{enumerate}
+\item
+Quantifiable: expressed in math/logic terms
+\item
+Measurable: metric
+\item
+Repliable
+\end{enumerate}
+
+% ==============================================================================
+\section{Dataset \& Input \$ Metric}
+\begin{enumerate}
+\item
+Environment/Experiments.
+\item
+Benchmark model \& results, which contextualises existing methods/knowledge in the domain.
+\item
+Metric: objectively compare the solution model with the benchmark model.
+\end{enumerate}
+
+% ==============================================================================
+\section{Theoretical workflow}
+\subsection{End-to-end formalization}
+We are given a training set $\{\ve x^i\}_{i=1}^n \subset \R^{|\Set A|}$ 
+of feature-vectors (e.g.~MNIST images).
+Our task is to classify the corresponding labels $\{y^i\}_{i=1}^n$
+(e.g.~shown numbers $0 \ldots 9$) by maximizing 
+the probability $p_\theta(y^i|\ve x^i)$ parameterized by $\theta$.
+However, the classification shall be performed with very few features,
+which we can select in an iterative process.
+
+\todo[inline]{MDP fomulation}
+
+
+Starting with a fully hidden vector $\ve x^i_0$, 
+a stochastic policy $\pi_\phi(a|\ve x^i_t)$, parameterized by $\phi$,
+will select which feature $a \in \Set A$ will be revealed next.
+This implies a transition model $P(\ve x^i_{t+1}|\ve x^i_{t}, a)$, 
+which reveals feature $a$ of masked vector $\ve x^i_t$.
+The cross-entropy classification loss after $t$ time steps is
+$$
+	\Set L_t := -\smallfrac{1}{n} \smallsum{i=1}{n}\,  
+	\E_\pi\Big[ \ln p_\theta(y^i|\ve x^i_t) \Big]
+	\quad \text{where} \quad
+	\E_\pi\Big[f(\ve x^i_t)\Big] := \E\Big[ f(\ve x^i_t) \,\Big|
+		\stack{
+		a_k \sim \pi_\phi(\ve x_k^i)
+		\brs[-5mm]
+		\ve x^i_{k+1} \sim P(\ve x^i_k, a_k)
+		}\!, 0 \leq k < t
+	\Big] \,.
+$$ 
+We can optimizes all classifications after up to $T$ reveals 
+in one end-to-end loss functions:
+$$ 
+	\Set L \;:=\; \sum_{t=\new{1}}^T \Set L_t \;=\; 
+	-\smallfrac{1}{n} \sum_{i=1}^{n}\,  
+	\underbrace{\E_\pi\Big[ \smallsum{t=\new{1}}{T} 
+		\overbrace{\ln p_\theta(y^i| \ve x^i_t)}^{r^i_\new{t-1}} 
+	\Big]}_{J^\pi} \,.
+$$
+Note that this is also the objective $J^\pi$ of reinforcement learning
+with rewards $r^i_t := \ln p_\theta(y^i|\ve x^i_{t+1})$.
+We can therefore optimize the policy $\pi_\phi$
+with the REINFORCE algorithm \citep{Williams92}:
+$$
+	\subgrad{\phi} \Set L \;=\; 
+	-\smallfrac{1}{n} \sum_{i=1}^{n} \sum_{t=\new 1}^{T}\,  
+	\E_\pi\Big[ 
+		\ln p_\theta(y^i| \ve x^i_t)  \,
+		\subgrad{\phi} \ln \pi_\phi(a_\new{t-1}| \ve x^i_\new{t-1}) \Big] \,.
+$$
+To learn both models simultaneously end-2-end, we can therefore use the 
+combined loss\footnote{Where $\bot$ stops the gradient flow,
+	e.g.~using \texttt{detach()} in \texttt{pytorch}.}:
+$$
+	\Set L^\text{e2e} \quad:=\quad
+	- \E_\pi\Big[
+	\smallfrac{1}{n} \sum_{i=1}^{n} \sum_{t=\new 1}^{T}\,  \Big(
+	 \ln p_\theta(y^i| \ve x^i_t) 
+	+ \lambda \bot\big(\ln p_\theta(y^i| \ve x^i_t)\big)  \,
+		\ln \pi_\phi(a_\new{t-1}| \ve x^i_\new{t-1}) \Big) \Big]\,.	
+$$
+Note that the choice of $\lambda$ is irrelevant, 
+unless the two both models $p_\theta$ and $\pi_\phi$ share parameters.
+One could also use actor-critic algorithms \citep{Sutton00}.
+However, the downside is that all samples have to be 
+{\em on-policy}, that is, sampled by the current policy $\pi_\theta$.
+This is slow and can lead to catastrophic forgetting
+\citep[which can be counteracted by modern 
+algorithms,][but this is another story]{Schulman15, Schulman17}.
+
+
+% ==============================================================================
+\subsection{Using tree search}
+Starting with AlphaGoZero \citep{Silver17}, 
+Deepmind's work on AlphaGo \citep{Silver16}
+has moved away from traditional reinforcement learning
+and uses in their latest iterations \citep{Silver18, Schrittwieser20}
+a classification loss instead:
+$$
+	\Set L' \quad:=\quad
+	-\smallfrac{1}{n} \sum_{i=1}^{n} \sum_{t=0}^{\new{T-1}}\,  
+	\E_{\Set T}\Big[ \ln \pi_\phi(a_t| \ve x^i_t) \Big] \,,
+$$
+where $\Set T(a|\ve x^i_t)$ denotes the tree-search operator
+starting at, or continuing from, $\ve x^i_t$. 
+On the surface tree-search often yields an already good policy,
+which is then distilled into the policy $\pi_\phi$.
+However, this way $\pi_\phi$ can never become better than $\Set T$.
+If not the entire search-tree can be computed efficiently,
+and the performance of $\Set T$ is therefore often suboptimal.
+\citet{Silver17} argue that this changes fundamentally 
+when we can use $\pi_\phi$ in $\Set T$ (now denoted $\Set T_\pi$).
+If we can guarantee that $\Set T_\pi$ is a {\em policy improvement 
+operator}, i.e.~$\Set L(\Set T_\pi) \geq \Set L(\pi_\phi)$,
+the learned policy will keep improving.
+This can be guaranteed by making sure that the 
+action sequences that would be likely under $\pi_\phi$
+are included in the tree search first,
+e.g.~by implementing a preferential expansion heuristic
+(policy orders actions during node expansion)
+or by drawing the first $m$ actions in any expanded node
+from the policy $\pi_\phi$ (e.g. by making $\pi_\phi$ a softmax). 
+
+Keep in mind that this does not allow to train the classifier
+with the same loss function, but one should still consider
+adjusting the classifier to the distribution induced by
+the learned policy $\pi_\phi$,
+e.g., by minimizing $\Set L^\text{ts} := \Set L + \lambda \Set L'$.
+
+% ==============================================================================
+\subsection{On-policy learning for tree-search}
+Using tree-search $\Set T(a^i_t|\ve x^i_t)$ 
+on individual samples $\ve x^i$
+induces another problem that 
+Cheng was pointing out in our discussion: 
+different samples $i$ can have different optimal actions $a$ at time $t$.
+Training with actions found by a tree-search 
+will therefore yield the distribution 
+$$
+	\xi(a_t|\ve x_t) 
+	\quad:=\quad \smallfrac{1}{n}\sum_{i=1}^n \,
+	\mathbb{I}[\Set T(a_t| \ve x^i_t) = 1] \,,
+$$
+where $\mathbb{I}$ denotes the indicator operator, 
+which is 1 if the argument is true and 0 otherwise. 
+This induces two problems:
+\begin{enumerate}
+	\item In difference to tree search, 
+		which always knows the current sample $\ve x^i$
+		and therefore which feature should be revealed, 
+		the classification loss $\Set L'$
+		uses the expectation $\E_{\Set T}$ to imitate $\xi$.
+		This means the learned policy $\pi$ 
+		will have to make some choices randomly when 
+		faced with unknown $\ve x_t$.
+		These decisions will lead to states $\ve x^i_t$
+		that the decision tree would not have visited
+		and which is the policy has therefore not been trained for. 
+	\item The distribution $\xi(a_t|\ve x_t)$ may not be the optimal
+		for an unknown partially revealed $\ve x_t$,
+		as another action, that is suboptimal for each image,
+		may reveal the most information to distinguish between 
+		samples and would therefore be optimal for an unknown $\ve x_t$.
+\end{enumerate}
+
+\subsubsection{On-policy learning}
+First, note that both problems appear due to tree-search.
+Minimizing the end-to-end loss $\Set L^\text{e2e}$
+should learn to select actions that optimize the long term
+accuracy for all samples and do this {\em on-policy}
+by training on the rollouts of the policy itself.
+We can introduce the latter to tree-search
+by sampling $\ve x_t^i$ with the learned policy, 
+but selecting the targets with $\Set T$:
+$$
+	\Set L'' \quad:=\quad
+	-\smallfrac{1}{n} \sum_{i=1}^{n} \sum_{t=0}^{T-1}\,  
+	\E_{\pi}\Big[ \ln \pi_\phi(\bar a_t| \ve x^i_t) 
+		\,\Big|\, \bar a_t \sim \Set T(\cdot|\ve x_t^i) \Big] \,.
+$$
+Note that this objective will still imitate $\xi$,
+but on the entire distribution of samples reachable by $\pi_\phi$.
+For tree-search algorithms that only output 
+an optimal sequence of actions, 
+this would require to rerun the search whenever 
+the policy decides to alter that sequence.
+The same is advisable in regular intervals
+if the tree search only returns approximately optimal sequences
+(which have seen less data deeper in the tree).
+
+\subsubsection{Fixed tree search}
+The second problem above is harder to solve with tree-search.
+To demonstrate this, imagine some samples $\{\ve x^i\}_{i=1}^n$,
+which at some time $t > 0$ look the same, 
+i.e.~$\ve x_t = \ve x^i_t, \forall i$,
+but have different optimal actions 
+$\bar a^i_t \sim \Set T(\cdot|\ve x^i_t)$
+according to tree-search, 
+because tree-search can look into the future 
+where the samples differ from each other.
+However, there might be another action 
+$\bar a^*_t \neq \bar a^i_t, \forall i$,
+which is sub-optimal for each sample but optimal for their combination:
+$$
+	p_\theta\big(y^i| P(\ve x^i_t, \bar a^i_t)\big) 
+	> p_\theta\big(y^i| P(\ve x^i_t, \bar a^*_t)\big) \,, 
+	\quad \text{but} \quad
+	\smallsum{j=1}{n}\, p_\theta\big(y^j | P(\ve x^j_t, \bar a^i_t)\big) < 
+	\smallsum{j=1}{n}\, p_\theta\big(y^j| P(\ve x^j_t, \bar a^*_t)\big) \,, 
+	\quad	\forall i\,.
+$$
+For optimal classification of unknown samples $\ve x_t$, 
+we should aim to predict $\bar a^*_t$, not $\bar a^i_t$.
+This sounds like the ``joint tree search'' procedure that Julia
+has implemented, but I would like to point out that this is
+only optimal when $\ve x_t = \ve x^i_t, \forall i$,
+that is, when there is no difference in the observations.
+Instead, I would propose to average the tree search {\em only} over
+the samples that have the same observation as current sample $\ve x_t$, 
+i.e.~$\Set X(\ve x_t) := \big\{ i \,\big|\, 
+\|\ve x_t^i - \ve x_t \| < \epsilon, 1 \leq i \leq n\big\}$.
+
+It took me a while to come up with the value definition
+of the corresponding tree, so please check the following carefully.
+A node is characterized by the visible features $\ve x_t$
+and has a list of children $\Set C_a$ for each explored action $a \in \Set A$. 
+Those children $\ve x' \in \Set C_a$ 
+are the result of revealing feature $a$ 
+in a sample $\ve x^i_t$ from the set $i \in \Set X(\ve x_t)$
+that is consistent with $\ve x_t$. 
+As multiple paths can lead to the same node $\ve x'$,
+children should be stored in a hash table to break transpositions.
+With every forward path choosing $a$ in this node, 
+a random (or enumerated, or heuristic) 
+consistent sample $i \in \Set X(\ve x_t)$ is chosen
+and the successor $\ve x' \sim P(\ve x^i_t, a)$ determined. 
+If $\ve x'$ is not already in $\Set C_a$,
+it is recalled from the hash table and added. 
+This way, $\Set C_a$ will converge to the set of 
+successors to all consistent samples.
+Leafs simply have no children, 
+i.e.~$\Set C_a = \varnothing, \forall a \in \Set A$.
+After the forward pass has reached a leaf,
+the backwards pass adjusts the value $V(\ve x_t)$
+of all nodes along the sampled path: 
+$$
+	V(\ve x_t) \quad := \quad 
+	\E\Big[\ln p_\theta(y^i |\, \ve x_{t}) 
+		\,\Big|\, i \in \Set X(\ve x_t) \Big]
+	+
+	\max_{a \in \Set A} 
+	\E\Big[ V(\ve x') \,\Big|\,	\ve x' \in \Set C_a	\Big]  \,.
+$$
+Note that the average ``reward'' for classifying $\ve x_t$
+does not depend on the choice of action $a$
+and can be computed once at the creation of the node.
+An obvious extension is to choose the executed action
+in the forward pass with some heuristic,
+e.g.~with the learned $\pi_\phi$. 
+
+
+%\newpage
+% ==============================================================================
+%\def\FormatName#1{\IfSubStr{#1}{B\"ohmer}{\textbf{#1}}{#1}}
+\def\FormatName#1{#1}
+\bibliographystyle{highlight}
+{\footnotesize\bibliography{references}}
+
+\end{document}
