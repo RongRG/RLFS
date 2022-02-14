@@ -24,6 +24,24 @@ Feature selection literature.
 
 % ==============================================================================
 \section{Problem/Solution Statement}
+
+\todo[inline]{MDP fomulation}
+
+Feature selection as a game (MDP)
+\begin{itemize}
+\item
+Set of states $|\Set S| = 2^{|\Set A|}$
+\item
+Set of actions $\Set A = \{\ve x^i_{1:t}\}$
+\item
+Reward function: ???
+\item
+Goal: 
+\item
+Bellman optimality
+
+\end{itemize}
+
 \begin{enumerate}
 \item
 Quantifiable: expressed in math/logic terms
@@ -54,9 +72,6 @@ Our task is to classify the corresponding labels $\{y^i\}_{i=1}^n$
 the probability $p_\theta(y^i|\ve x^i)$ parameterized by $\theta$.
 However, the classification shall be performed with very few features,
 which we can select in an iterative process.
-
-\todo[inline]{MDP fomulation}
-
 
 Starting with a fully hidden vector $\ve x^i_0$, 
 a stochastic policy $\pi_\phi(a|\ve x^i_t)$, parameterized by $\phi$,
