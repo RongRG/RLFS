@@ -27,20 +27,22 @@ Feature selection literature.
 
 \todo[inline]{MDP fomulation}
 
-Feature selection as a game (MDP)
-\begin{itemize}
-\item
-Set of states $|\Set S| = 2^{|\Set A|}$
-\item
-Set of actions $\Set A = \{\ve x^i_{1:t}\}$
-\item
-Reward function: ???
-\item
-Goal: 
-\item
-Bellman optimality
+Feature selection as a reinforcement learning problem \citep{gaudel_feature_2010}
 
+Given a feature set $\Set X$, the state space $\Set S$ of the MDP is the powerset of $\Set X$. We define a tree $\Set T$ where each node $S$ correspond to a state. The action is to select a child node $S_c$ of the parent node $S$, $\{S_c \subset \Set X, \exists ~ \ve x  \in \Set X \backslash \Set S, S_c = S \cup \{\ve x\} \} $
+
+Goal: FS $\rightarrow$ generalization error. The features are used in the classification/regression model. Feature selection and model construction are combined in one end-to-end process.
+\begin{itemize}
+	\item Training\\
+	\begin{align}
+	   \Set L = (z-v)^2 - \pi^T\log(P) + c\|\theta\|^2
+	\end{align}
+	The $v, \pi$ guides the MCTS, while MCTS can be viewed as a way of building $v, \pi$ (policy iteration). 
+	
+	\item Test
 \end{itemize}
+
+Bellman optimality
 
 \begin{enumerate}
 \item
@@ -79,7 +81,7 @@ will select which feature $a \in \Set A$ will be revealed next.
 This implies a transition model $P(\ve x^i_{t+1}|\ve x^i_{t}, a)$, 
 which reveals feature $a$ of masked vector $\ve x^i_t$.
 The cross-entropy classification loss after $t$ time steps is
-$$
+\begin{align}
 	\Set L_t := -\smallfrac{1}{n} \smallsum{i=1}{n}\,  
 	\E_\pi\Big[ \ln p_\theta(y^i|\ve x^i_t) \Big]
 	\quad \text{where} \quad
@@ -90,38 +92,38 @@ $$
 		\ve x^i_{k+1} \sim P(\ve x^i_k, a_k)
 		}\!, 0 \leq k < t
 	\Big] \,.
-$$ 
+\end{align}
 We can optimizes all classifications after up to $T$ reveals 
 in one end-to-end loss functions:
-$$ 
+\begin{align}
 	\Set L \;:=\; \sum_{t=\new{1}}^T \Set L_t \;=\; 
 	-\smallfrac{1}{n} \sum_{i=1}^{n}\,  
 	\underbrace{\E_\pi\Big[ \smallsum{t=\new{1}}{T} 
 		\overbrace{\ln p_\theta(y^i| \ve x^i_t)}^{r^i_\new{t-1}} 
 	\Big]}_{J^\pi} \,.
-$$
+\end{align}
 Note that this is also the objective $J^\pi$ of reinforcement learning
 with rewards $r^i_t := \ln p_\theta(y^i|\ve x^i_{t+1})$.
 We can therefore optimize the policy $\pi_\phi$
 with the REINFORCE algorithm \citep{Williams92}:
-$$
+\begin{align}
 	\subgrad{\phi} \Set L \;=\; 
 	-\smallfrac{1}{n} \sum_{i=1}^{n} \sum_{t=\new 1}^{T}\,  
 	\E_\pi\Big[ 
 		\ln p_\theta(y^i| \ve x^i_t)  \,
 		\subgrad{\phi} \ln \pi_\phi(a_\new{t-1}| \ve x^i_\new{t-1}) \Big] \,.
-$$
+\end{align}
 To learn both models simultaneously end-2-end, we can therefore use the 
 combined loss\footnote{Where $\bot$ stops the gradient flow,
 	e.g.~using \texttt{detach()} in \texttt{pytorch}.}:
-$$
+\begin{align}
 	\Set L^\text{e2e} \quad:=\quad
 	- \E_\pi\Big[
 	\smallfrac{1}{n} \sum_{i=1}^{n} \sum_{t=\new 1}^{T}\,  \Big(
 	 \ln p_\theta(y^i| \ve x^i_t) 
 	+ \lambda \bot\big(\ln p_\theta(y^i| \ve x^i_t)\big)  \,
 		\ln \pi_\phi(a_\new{t-1}| \ve x^i_\new{t-1}) \Big) \Big]\,.	
-$$
+\end{align}
 Note that the choice of $\lambda$ is irrelevant, 
 unless the two both models $p_\theta$ and $\pi_\phi$ share parameters.
 One could also use actor-critic algorithms \citep{Sutton00}.
@@ -139,11 +141,11 @@ Deepmind's work on AlphaGo \citep{Silver16}
 has moved away from traditional reinforcement learning
 and uses in their latest iterations \citep{Silver18, Schrittwieser20}
 a classification loss instead:
-$$
+\begin{align}
 	\Set L' \quad:=\quad
 	-\smallfrac{1}{n} \sum_{i=1}^{n} \sum_{t=0}^{\new{T-1}}\,  
 	\E_{\Set T}\Big[ \ln \pi_\phi(a_t| \ve x^i_t) \Big] \,,
-$$
+\end{align}
 where $\Set T(a|\ve x^i_t)$ denotes the tree-search operator
 starting at, or continuing from, $\ve x^i_t$. 
 On the surface tree-search often yields an already good policy,
@@ -179,11 +181,11 @@ Cheng was pointing out in our discussion:
 different samples $i$ can have different optimal actions $a$ at time $t$.
 Training with actions found by a tree-search 
 will therefore yield the distribution 
-$$
+\begin{align}
 	\xi(a_t|\ve x_t) 
 	\quad:=\quad \smallfrac{1}{n}\sum_{i=1}^n \,
 	\mathbb{I}[\Set T(a_t| \ve x^i_t) = 1] \,,
-$$
+\end{align}
 where $\mathbb{I}$ denotes the indicator operator, 
 which is 1 if the argument is true and 0 otherwise. 
 This induces two problems:
@@ -215,12 +217,12 @@ by training on the rollouts of the policy itself.
 We can introduce the latter to tree-search
 by sampling $\ve x_t^i$ with the learned policy, 
 but selecting the targets with $\Set T$:
-$$
+\begin{align}
 	\Set L'' \quad:=\quad
 	-\smallfrac{1}{n} \sum_{i=1}^{n} \sum_{t=0}^{T-1}\,  
 	\E_{\pi}\Big[ \ln \pi_\phi(\bar a_t| \ve x^i_t) 
 		\,\Big|\, \bar a_t \sim \Set T(\cdot|\ve x_t^i) \Big] \,.
-$$
+\end{align}
 Note that this objective will still imitate $\xi$,
 but on the entire distribution of samples reachable by $\pi_\phi$.
 For tree-search algorithms that only output 
@@ -244,14 +246,14 @@ where the samples differ from each other.
 However, there might be another action 
 $\bar a^*_t \neq \bar a^i_t, \forall i$,
 which is sub-optimal for each sample but optimal for their combination:
-$$
+\begin{align}
 	p_\theta\big(y^i| P(\ve x^i_t, \bar a^i_t)\big) 
 	> p_\theta\big(y^i| P(\ve x^i_t, \bar a^*_t)\big) \,, 
 	\quad \text{but} \quad
 	\smallsum{j=1}{n}\, p_\theta\big(y^j | P(\ve x^j_t, \bar a^i_t)\big) < 
 	\smallsum{j=1}{n}\, p_\theta\big(y^j| P(\ve x^j_t, \bar a^*_t)\big) \,, 
 	\quad	\forall i\,.
-$$
+\end{align}
 For optimal classification of unknown samples $\ve x_t$, 
 we should aim to predict $\bar a^*_t$, not $\bar a^i_t$.
 This sounds like the ``joint tree search'' procedure that Julia
@@ -286,14 +288,14 @@ i.e.~$\Set C_a = \varnothing, \forall a \in \Set A$.
 After the forward pass has reached a leaf,
 the backwards pass adjusts the value $V(\ve x_t)$
 of all nodes along the sampled path: 
-$$
+\begin{align}
 	V(\ve x_t) \quad := \quad 
 	\E\Big[\ln p_\theta(y^i |\, \ve x_{t}) 
 		\,\Big|\, i \in \Set X(\ve x_t) \Big]
 	+
 	\max_{a \in \Set A} 
 	\E\Big[ V(\ve x') \,\Big|\,	\ve x' \in \Set C_a	\Big]  \,.
-$$
+\end{align}
 Note that the average ``reward'' for classifying $\ve x_t$
 does not depend on the choice of action $a$
 and can be computed once at the creation of the node.
@@ -301,6 +303,8 @@ An obvious extension is to choose the executed action
 in the forward pass with some heuristic,
 e.g.~with the learned $\pi_\phi$. 
 
+% ==============================================================================
+\section{Complexity Analysis}
 
 %\newpage
 % ==============================================================================
