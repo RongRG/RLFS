@@ -48,19 +48,19 @@ Feature Selection as a One-Player Game \citep{gaudel_feature_2010} & other non-d
 
 % ==============================================================================
 \section{Problem/Solution Statement}
+
 What is the main challenge for AFA? What are the main drawbacks of the existing approaches? Why RL is necessary?\\
 
 Significance of the problem: real-world domains where data is minimal and collection is expensive.\\
 
 Technical novelty? not all original, but are rather an interesting use-case/application of existing methods and are a useful contribution.\\ 
 
-\todo[inline]{MDP fomulation}
 
 Feature selection as a reinforcement learning problem \citep{gaudel_feature_2010}, which simultaneously maximize the prediction accuracy and the feature acquisition returns.
 
-Given a feature set $\Set A$, the state space of the MDP is the powerset of $\Set A$. We define a tree $\Set T$ where each node $\ve x$ correspond to a state, $\ve x \subset \Set A$. The action is to select a child node $\ve x_c$ of the parent node $\ve x_p$. The node sets are defined as $\{\ve x_c \subset \Set A, \exists ~ a \in \Set A \backslash \ve x, \ve x_c = \ve x \cup \{a\}\}$ and $\{\ve x_p \subset \Set A, \exists ~ a \in \ve x, \ve x_p = \ve x \backslash \{a\}\}$. The number of nodes in the tree is $2^{|\Set A|}$.
+Given a feature set $\Set A$, the state space of the MDP is the powerset of $\Set A$. We define a tree $\Set T$ where each node $\ve x$ correspond to a state, $\ve x \subset \Set A$. The action is to select a child node $\ve x_c$ of the parent node $\ve x_p$. The node sets are defined as $\{\ve x_c \subset \Set A, \exists ~ a \in \Set A \backslash \ve x, \ve x_c = \ve x \cup \{a\}\}$ and $\{\ve x_p \subset \Set A, \exists ~ a \in \ve x, \ve x_p = \ve x \backslash \{a\}\}$. The number of nodes in the tree is $2^{|\Set A|}$.\\
 
-Goal: FS $\rightarrow$ generalization error. The features are used in the classification/regression model. Feature selection and model construction are combined in one end-to-end process.
+Goal: FS $\rightarrow$ generalization error. The features are used in the classification/regression model. Feature selection and model construction are combined in one end-to-end process.\\
 
 
 Bellman optimality
