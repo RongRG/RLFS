@@ -13,34 +13,56 @@
 % ==============================================================================
 \section{Domain Background}
 
-\todo[inline, prepend, caption={Background}]{
-\begin{enumerate}
-\item
-Pseudocode of AlphaZero.
-\item
-Feature selection literature.
-\end{enumerate}
-}
+\begin{center}
+\begin{longtable}{| m{4cm} | m{5cm} | m{5cm} | }
+\hline
+\textbf{Paper} & \textbf{Summary} & \textbf{Drawbacks w.r.t ours}\\
+\hline
+\hline
+EDDI: Efficient Dynamic Discovery of High-Value Information with Partial VAE & (Partial) variational autoencoders + an information theoretic acquisition function that seeks to maximize the expected information gain over a set of unobserved variables & \href{https://slideslive.com/38931299/efficient-missingvalue-acquisition-with-variational-autoencoders?ref=account-folder-55866-folders}{Efficient Missing-value Acquisition with Variational Autoencoders} \\
+\hline
+ODIN: Optimal Discovery of High-value INformation Using Model-based Deep Reinforcement Learning & Use Partial VAE to learn the generative distribution of the data & Model-based RL; The state-model handles missing data; Same reward function as ours\\
+\hline
+Icebreaker:
+Element-wise Efficient Information Acquisition with a Bayesian Deep Latent Gaussian Model & amortized inference is used for local latent variables and sampling methods used for model parameters & deal with the ice start problem in active learning \\
+\hline
+\hline
+Learning to Look Around: Intelligently Exploring Unseen Environments for Unknown Tasks & active observation completion &  scene understanding task, independent of a recognition task\\
+\hline
+Glance and Focus: a Dynamic Approach to Reducing Spatial Redundancy in Image Classification & reduce the spatial redundancy in image classification tasks, CNN + RNN & down-sampled version of the original image or a cropped patch\\
+\hline
+Recurrent Models of Visual Attention & end-to-end optimization of the sequential decision process,  a single recurrent neural network & uses the glimpse sensor to extract retina representation\\
+\hline
+\hline
+AlphaZero, MuZero & tree search and search-based policy iteration & 
+	\begin{align}
+	   \Set L = (z-v)^2 - \pi^T\log(P) + c\|\theta\|^2
+	\end{align}
+	The $v, \pi$ guides the MCTS, while MCTS can be viewed as a way of building $v, \pi$ (policy iteration). \\
+\hline
+\hline
+other non-deep methods & & \\
+\hline
+\end{longtable}
+\end{center}
+
 
 % ==============================================================================
 \section{Problem/Solution Statement}
+What is the main challenge for AFA? What are the main drawbacks of the existing approaches? Why RL is necessary?\\
+
+Significance of the problem: real-world domains where data is minimal and collection is expensive.\\
+
+Technical novelty? not all original, but are rather an interesting use-case/application of existing methods and are a useful contribution.\\ 
 
 \todo[inline]{MDP fomulation}
 
-Feature selection as a reinforcement learning problem \citep{gaudel_feature_2010}
+Feature selection as a reinforcement learning problem \citep{gaudel_feature_2010}, which simultaneously maximize the prediction accuracy and the feature acquisition returns.
 
 Given a feature set $\Set X$, the state space $\Set S$ of the MDP is the powerset of $\Set X$. We define a tree $\Set T$ where each node $S$ correspond to a state. The action is to select a child node $S_c$ of the parent node $S$, $\{S_c \subset \Set X, \exists ~ \ve x  \in \Set X \backslash \Set S, S_c = S \cup \{\ve x\} \} $
 
 Goal: FS $\rightarrow$ generalization error. The features are used in the classification/regression model. Feature selection and model construction are combined in one end-to-end process.
-\begin{itemize}
-	\item Training\\
-	\begin{align}
-	   \Set L = (z-v)^2 - \pi^T\log(P) + c\|\theta\|^2
-	\end{align}
-	The $v, \pi$ guides the MCTS, while MCTS can be viewed as a way of building $v, \pi$ (policy iteration). 
-	
-	\item Test
-\end{itemize}
+
 
 Bellman optimality
 
@@ -54,20 +76,47 @@ Repliable
 \end{enumerate}
 
 % ==============================================================================
-\section{Dataset \& Input \$ Metric}
+\section{Dataset \& Input \& Metric}
 \begin{enumerate}
 \item
-Environment/Experiments.
+	\todo[inline]{Environment/Experiments.}
+	\begin{itemize}
+	\item
+	CUBE-$\delta$
+	\item
+	MNIST
+	\item
+	IMAGENET
+	\item
+	Diagnostic tests in medical settings: \href{https://mimic.mit.edu}{MIMIC}, \href{https://archive.ics.uci.edu/ml/index.php}{UCI}
+	\end{itemize}
+
 \item
-Benchmark model \& results, which contextualises existing methods/knowledge in the domain.
+	\todo[inline]{Benchmark model \& results, which contextualises existing methods/knowledge in the domain.}
+	\begin{itemize}
+	\item
+	SOTA: How are the existing work related to our methods? 
+	\item
+	Additional experiments contrasting with non-deep learning methods
+	\end{itemize}
 \item
-Metric: objectively compare the solution model with the benchmark model.
+	\todo[inline]{Metric: objectively compare the solution model with the benchmark model.}
+	\begin{itemize}
+	\item
+	Accuracy vs. \# of acquired features
+	\item
+	ROC AUC vs. \# of acquired features\\
+	AUIC: area under the information curve\\
+	Negative log likelihood (for Imputation task)
+	\item
+	Time complexity
+	\end{itemize}
 \end{enumerate}
 
 % ==============================================================================
 \section{Theoretical workflow}
 \subsection{End-to-end formalization}
-We are given a training set $\{\ve x^i\}_{i=1}^n \subset \R^{|\Set A|}$ 
+We are given a training set \hlfix{$\{\ve x^i\}_{i=1}^n \subset \R^{|\Set A|}$}{sets: index and value}
 of feature-vectors (e.g.~MNIST images).
 Our task is to classify the corresponding labels $\{y^i\}_{i=1}^n$
 (e.g.~shown numbers $0 \ldots 9$) by maximizing 
@@ -103,7 +152,8 @@ in one end-to-end loss functions:
 	\Big]}_{J^\pi} \,.
 \end{align}
 Note that this is also the objective $J^\pi$ of reinforcement learning
-with rewards $r^i_t := \ln p_\theta(y^i|\ve x^i_{t+1})$.
+with rewards
+\hlfix{ $r^i_t := \ln p_\theta(y^i|\ve x^i_{t+1})$}{ $r^i_t := \ln p_\theta(y^i|\ve x^i_{t+1}) - T \cdot c_t$} ~
 We can therefore optimize the policy $\pi_\phi$
 with the REINFORCE algorithm \citep{Williams92}:
 \begin{align}
@@ -136,10 +186,10 @@ algorithms,][but this is another story]{Schulman15, Schulman17}.
 
 % ==============================================================================
 \subsection{Using tree search}
-Starting with AlphaGoZero \citep{Silver17}, 
-Deepmind's work on AlphaGo \citep{Silver16}
+Starting with AlphaGoZero \citep{silver_mastering_2017}, 
+Deepmind's work on AlphaGo \citep{silver_mastering_2016}
 has moved away from traditional reinforcement learning
-and uses in their latest iterations \citep{Silver18, Schrittwieser20}
+and uses in their latest iterations \citep{silver_general_2018, schrittwieser_mastering_2020}
 a classification loss instead:
 \begin{align}
 	\Set L' \quad:=\quad
@@ -305,6 +355,17 @@ e.g.~with the learned $\pi_\phi$.
 
 % ==============================================================================
 \section{Complexity Analysis}
+
+
+% ==============================================================================
+\section{Network Architecture}
+\begin{itemize}
+\item
+Feature encoding: Shared layers (a shared encoder) for the feature power set feed into both the prediction classifier and the feature acquisition policy.
+\item
+Initialization of the classifier: Pretrain the classifier $p_\theta$ with fully observed features and dropout regularization, in order to speed up training.
+\end{itemize}
+
 
 %\newpage
 % ==============================================================================

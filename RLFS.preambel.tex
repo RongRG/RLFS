@@ -25,10 +25,20 @@
 
 % Todo notes
 %\usepackage[colorlinks]{hyperref}
+\usepackage{soul}
 \usepackage[colorinlistoftodos]{todonotes}
+\makeatletter
+ \if@todonotes@disabled
+ \newcommand{\hlfix}[2]{#1}
+ \else
+ \newcommand{\hlfix}[2]{\texthl{#1}\todo{#2}}
+ \fi
+ \makeatother
 
 
 \usepackage[authoryear,round]{natbib}
+
+\usepackage{longtable}
 
 % Special things
 \def\TReg{\textsuperscript{\textregistered}}
