@@ -19,29 +19,28 @@
 \textbf{Paper} & \textbf{Summary} & \textbf{Drawbacks w.r.t ours}\\
 \hline
 \hline
-EDDI: Efficient Dynamic Discovery of High-Value Information with Partial VAE & (Partial) variational autoencoders + an information theoretic acquisition function that seeks to maximize the expected information gain over a set of unobserved variables & \href{https://slideslive.com/38931299/efficient-missingvalue-acquisition-with-variational-autoencoders?ref=account-folder-55866-folders}{Efficient Missing-value Acquisition with Variational Autoencoders} \\
+EDDI \citep{ma_eddi_2019} & (Partial) variational autoencoders + an information theoretic acquisition function that seeks to maximize the expected information gain over a set of unobserved variables & \href{https://slideslive.com/38931299/efficient-missingvalue-acquisition-with-variational-autoencoders?ref=account-folder-55866-folders}{Efficient Missing-value Acquisition with Variational Autoencoders} \\
 \hline
-ODIN: Optimal Discovery of High-value INformation Using Model-based Deep Reinforcement Learning & Use Partial VAE to learn the generative distribution of the data & Model-based RL; The state-model handles missing data; Same reward function as ours\\
+ODIN \citep{zannone_odin_2019} & Use Partial VAE to learn the generative distribution of the data & Model-based RL; The state-model handles missing data; Same reward function as ours\\
 \hline
-Icebreaker:
-Element-wise Efficient Information Acquisition with a Bayesian Deep Latent Gaussian Model & amortized inference is used for local latent variables and sampling methods used for model parameters & deal with the ice start problem in active learning \\
-\hline
-\hline
-Learning to Look Around: Intelligently Exploring Unseen Environments for Unknown Tasks & active observation completion &  scene understanding task, independent of a recognition task\\
-\hline
-Glance and Focus: a Dynamic Approach to Reducing Spatial Redundancy in Image Classification & reduce the spatial redundancy in image classification tasks, CNN + RNN & down-sampled version of the original image or a cropped patch\\
-\hline
-Recurrent Models of Visual Attention & end-to-end optimization of the sequential decision process,  a single recurrent neural network & uses the glimpse sensor to extract retina representation\\
+Icebreaker \citep{gong_icebreaker_2019} & amortized inference is used for local latent variables and sampling methods used for model parameters & deal with the ice start problem in active learning \\
 \hline
 \hline
-AlphaZero, MuZero & tree search and search-based policy iteration & 
+Learning to Look Around \citep{jayaraman_learning_2018} & active observation completion (unseen environments, unknown tasks) &  scene understanding task, independent of a recognition task\\
+\hline
+Glance and Focus \citep{wang_glance_2020} & reduce the spatial redundancy in image classification tasks, CNN + RNN & down-sampled version of the original image or a cropped patch\\
+\hline
+Recurrent Models of Visual Attention \citep{mnih_recurrent_2014} & end-to-end optimization of the sequential decision process,  a single recurrent neural network & uses the glimpse sensor to extract retina representation\\
+\hline
+\hline
+AlphaZero \citep{silver_general_2018} & tree search and search-based policy iteration & 
 	\begin{align}
 	   \Set L = (z-v)^2 - \pi^T\log(P) + c\|\theta\|^2
 	\end{align}
 	The $v, \pi$ guides the MCTS, while MCTS can be viewed as a way of building $v, \pi$ (policy iteration). \\
 \hline
 \hline
-other non-deep methods & & \\
+Feature Selection as a One-Player Game \citep{gaudel_feature_2010} & other non-deep methods & MCTS \\
 \hline
 \end{longtable}
 \end{center}
@@ -59,7 +58,7 @@ Technical novelty? not all original, but are rather an interesting use-case/appl
 
 Feature selection as a reinforcement learning problem \citep{gaudel_feature_2010}, which simultaneously maximize the prediction accuracy and the feature acquisition returns.
 
-Given a feature set $\Set X$, the state space $\Set S$ of the MDP is the powerset of $\Set X$. We define a tree $\Set T$ where each node $S$ correspond to a state. The action is to select a child node $S_c$ of the parent node $S$, $\{S_c \subset \Set X, \exists ~ \ve x  \in \Set X \backslash \Set S, S_c = S \cup \{\ve x\} \} $
+Given a feature set $\Set A$, the state space of the MDP is the powerset of $\Set A$. We define a tree $\Set T$ where each node $\ve x$ correspond to a state, $\ve x \subset \Set A$. The action is to select a child node $\ve x_c$ of the parent node $\ve x_p$. The node sets are defined as $\{\ve x_c \subset \Set A, \exists ~ a \in \Set A \backslash \ve x, \ve x_c = \ve x \cup \{a\}\}$ and $\{\ve x_p \subset \Set A, \exists ~ a \in \ve x, \ve x_p = \ve x \backslash \{a\}\}$. The number of nodes in the tree is $2^{|\Set A|}$.
 
 Goal: FS $\rightarrow$ generalization error. The features are used in the classification/regression model. Feature selection and model construction are combined in one end-to-end process.
 
@@ -164,8 +163,7 @@ with the REINFORCE algorithm \citep{Williams92}:
 		\subgrad{\phi} \ln \pi_\phi(a_\new{t-1}| \ve x^i_\new{t-1}) \Big] \,.
 \end{align}
 To learn both models simultaneously end-2-end, we can therefore use the 
-combined loss\footnote{Where $\bot$ stops the gradient flow,
-	e.g.~using \texttt{detach()} in \texttt{pytorch}.}:
+combined loss\hlfix{\footnote{Where $\bot$ stops the gradient flow, e.g.~using \texttt{detach()} in \texttt{pytorch}.}}{?}:
 \begin{align}
 	\Set L^\text{e2e} \quad:=\quad
 	- \E_\pi\Big[
@@ -203,7 +201,7 @@ which is then distilled into the policy $\pi_\phi$.
 However, this way $\pi_\phi$ can never become better than $\Set T$.
 If not the entire search-tree can be computed efficiently,
 and the performance of $\Set T$ is therefore often suboptimal.
-\citet{Silver17} argue that this changes fundamentally 
+\citet{silver_mastering_2017} argue that this changes fundamentally 
 when we can use $\pi_\phi$ in $\Set T$ (now denoted $\Set T_\pi$).
 If we can guarantee that $\Set T_\pi$ is a {\em policy improvement 
 operator}, i.e.~$\Set L(\Set T_\pi) \geq \Set L(\pi_\phi)$,
